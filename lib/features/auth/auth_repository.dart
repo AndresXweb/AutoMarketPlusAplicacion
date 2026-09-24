@@ -10,11 +10,32 @@ class AuthRepository {
   Future<void> signIn({required String email, required String password}) async {
     final res = await _api.dio.post(
       '/api/auth/sign-in/email',
-      data: {'email': email, 'password': password},
+      data: {
+        'email': email,
+        'password': password,
+      },
+      options: Options(
+        headers: {
+          'Origin': 'http://localhost:8080',
+        },
+        validateStatus: (s) => s != null && s < 500,
+      ),
     );
-    final token = _extractToken(res.data);
+
+    if (res.statusCode == 401 || res.statusCode == 403) {
+      final msg = _errorMessage(res.data) ??
+          'Correo o contraseña incorrectos (o origen no permitido).';
+      throw Exception(msg);
+    }
+    if (res.statusCode != null && res.statusCode! >= 400) {
+      throw Exception(_errorMessage(res.data) ?? 'Error al iniciar sesión (${res.statusCode})');
+    }
+
+    final token = _extractToken(res.data, res.headers);
     if (token == null || token.isEmpty) {
-      throw Exception('No se recibió token de sesión. Revisa la respuesta del login.');
+      throw Exception(
+        'Login OK pero no llegó token. Respuesta: ${res.data}',
+      );
     }
     await _api.saveToken(token);
   }
@@ -26,9 +47,24 @@ class AuthRepository {
   }) async {
     final res = await _api.dio.post(
       '/api/auth/sign-up/email',
-      data: {'email': email, 'password': password, 'name': name},
+      data: {
+        'email': email,
+        'password': password,
+        'name': name,
+      },
+      options: Options(
+        headers: {'Origin': 'http://localhost:8080'},
+        validateStatus: (s) => s != null && s < 500,
+      ),
     );
-    final token = _extractToken(res.data);
+
+    if (res.statusCode != null && res.statusCode! >= 400) {
+      throw Exception(
+        _errorMessage(res.data) ?? 'No se pudo registrar (${res.statusCode})',
+      );
+    }
+
+    final token = _extractToken(res.data, res.headers);
     if (token != null && token.isNotEmpty) {
       await _api.saveToken(token);
     }
@@ -56,29 +92,60 @@ class AuthRepository {
     return Profile.fromJson(Map<String, dynamic>.from(res.data as Map));
   }
 
-  String? _extractToken(dynamic data) {
-    if (data is! Map) return null;
-    // Better Auth suele devolver session.token
-    final session = data['session'];
-    if (session is Map && session['token'] != null) {
-      return session['token'].toString();
+  String? _extractToken(dynamic data, Headers headers) {
+    if (data is Map) {
+      final session = data['session'];
+      if (session is Map) {
+        if (session['token'] != null) return session['token'].toString();
+        if (session['sessionToken'] != null) return session['sessionToken'].toString();
+      }
+      if (data['token'] != null) return data['token'].toString();
+      final nested = data['data'];
+      if (nested is Map) {
+        final s = nested['session'];
+        if (s is Map && s['token'] != null) return s['token'].toString();
+      }
     }
-    if (data['token'] != null) return data['token'].toString();
+
+    final setCookie = headers['set-cookie'];
+    if (setCookie != null) {
+      for (final c in setCookie) {
+        final m = RegExp(r'(?:session_token|__Host-grok-auth\.session_token)=([^;]+)').firstMatch(c);
+        if (m != null) return Uri.decodeComponent(m.group(1)!);
+      }
+    }
+    return null;
+  }
+
+  String? _errorMessage(dynamic data) {
+    if (data is Map) {
+      if (data['message'] != null) return data['message'].toString();
+      if (data['error'] != null) {
+        final e = data['error'];
+        if (e is Map && e['message'] != null) return e['message'].toString();
+        return e.toString();
+      }
+    }
+    if (data is String && data.isNotEmpty) return data;
     return null;
   }
 
   String messageFromError(Object e) {
     if (e is DioException) {
       final data = e.response?.data;
-      if (data is Map && data['error'] != null) return data['error'].toString();
-      if (data is Map && data['message'] != null) return data['message'].toString();
+      final msg = _errorMessage(data);
+      if (msg != null) return msg;
       if (e.response?.statusCode == 401) return 'Correo o contraseña incorrectos';
-      if (e.type == DioExceptionType.connectionError) {
-        return 'Sin conexión al servidor. Revisa la URL en api_config.dart';
+      if (e.response?.statusCode == 403) {
+        return 'Origen no permitido. Añade el puerto de Flutter a trustedOrigins del backend.';
+      }
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout) {
+        return 'Sin conexión al servidor. Revisa api_config.dart y npm run dev.';
       }
       return e.message ?? 'Error de red';
     }
-    return e.toString();
+    return e.toString().replaceFirst('Exception: ', '');
   }
 }
 

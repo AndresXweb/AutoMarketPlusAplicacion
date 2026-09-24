@@ -1,0 +1,45 @@
+ARCHIVOS RESTANTES FLUTTER — AutoMarket
+=======================================
+
+1) En pubspec.yaml agrega:
+   image_picker: ^1.1.2
+
+2) Ejecuta:
+   flutter pub get
+
+3) Copia cada archivo a la MISMA ruta bajo lib/ de tu proyecto
+   (reemplaza si ya existe).
+
+NUEVOS
+------
+lib/features/publish/presentation/publish_vehicle_screen.dart
+lib/features/profile/presentation/edit_profile_screen.dart
+lib/features/profile/presentation/verification_screen.dart
+
+REEMPLAZAR
+----------
+lib/app_router.dart
+lib/features/profile/profile_repository.dart
+lib/features/catalog/catalog_repository.dart
+lib/features/catalog/presentation/catalog_screen.dart
+lib/features/profile/presentation/profile_screen.dart
+lib/features/vehicle/presentation/vehicle_detail_screen.dart
+lib/features/offers/presentation/offers_screen.dart
+
+4) Hot restart (R) o:
+   flutter run -d chrome
+
+FUNCIONES QUE SE AGREGAN
+------------------------
+- Publicar vehículo (fotos + formulario)
+- Editar perfil
+- Verificación de cédula
+- Filtros de catálogo
+- Oferta compra / permuta
+- Contraoferta en lista de ofertas
+- Botón publicar desde Perfil
+
+NOTA REGISTRO
+-------------
+Registro sigue con nombre/email/password (Better Auth).
+Los datos extra se completan en "Editar perfil".

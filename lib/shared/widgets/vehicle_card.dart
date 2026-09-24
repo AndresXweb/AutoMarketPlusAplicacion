@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/format.dart';
 import '../models/vehicle.dart';
+import 'app_image.dart';
 
 class VehicleCard extends StatelessWidget {
   const VehicleCard({super.key, required this.vehicle, required this.onTap});
@@ -12,9 +12,6 @@ class VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final img = vehicle.imageUrl;
-    final isNetwork = img.startsWith('http');
-
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       clipBehavior: Clip.antiAlias,
@@ -25,14 +22,7 @@ class VehicleCard extends StatelessWidget {
           children: [
             AspectRatio(
               aspectRatio: 16 / 9,
-              child: isNetwork
-                  ? CachedNetworkImage(
-                      imageUrl: img,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(color: AppColors.surface2),
-                      errorWidget: (_, __, ___) => _placeholder(),
-                    )
-                  : _placeholder(),
+              child: AppImage(src: vehicle.imageUrl),
             ),
             Padding(
               padding: const EdgeInsets.all(14),
@@ -76,15 +66,6 @@ class VehicleCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _placeholder() {
-    return Container(
-      color: AppColors.surface2,
-      child: const Center(
-        child: Icon(Icons.directions_car, size: 48, color: AppColors.muted),
       ),
     );
   }

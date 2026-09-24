@@ -58,7 +58,19 @@ class ProfileScreen extends ConsumerWidget {
               _row('WhatsApp', p.whatsapp ?? '—'),
               _row('Verificación', p.verificationStatus),
               _row('Cuenta', p.accountStatus),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => context.push('/edit-profile', extra: p),
+                icon: const Icon(Icons.edit),
+                label: const Text('Editar perfil'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => context.push('/publish'),
+                icon: const Icon(Icons.add_circle_outline),
+                label: const Text('Publicar vehículo'),
+              ),
+              const SizedBox(height: 16),
               ListTile(
                 leading: const Icon(Icons.directions_car),
                 title: const Text('Mis anuncios'),
@@ -73,6 +85,11 @@ class ProfileScreen extends ConsumerWidget {
                 leading: const Icon(Icons.handshake),
                 title: const Text('Ofertas'),
                 onTap: () => context.push('/offers'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.verified_user),
+                title: const Text('Verificación de cédula'),
+                onTap: () => context.push('/verification'),
               ),
               ListTile(
                 leading: const Icon(Icons.mail_outline),
