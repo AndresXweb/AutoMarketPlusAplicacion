@@ -1,0 +1,34 @@
+CÓMO ABRIR EN ANDROID STUDIO
+============================
+
+1. Descomprime automarket_app.zip
+
+2. Abre Android Studio → "Open" → selecciona la carpeta automarket_app
+
+3. Si pide "Get dependencies" o en terminal:
+   flutter pub get
+
+4. IMPORTANTE — URL del backend
+   Edita: lib/core/api/api_config.dart
+
+   Emulador Android:
+     static const String baseUrl = "http://10.0.2.2:8080";
+
+   Teléfono físico (misma WiFi que tu PC):
+     static const String baseUrl = "http://192.168.1.XX:8080";
+     (usa la IP que sale en el terminal del backend: Network: http://192.168.x.x:8080)
+
+5. El backend debe estar corriendo (npm run dev en AutoMarketPlus)
+
+6. Run ▶ en un emulador o dispositivo
+
+NOTA
+----
+Este zip trae el código Dart completo + AndroidManifest con cleartext HTTP.
+Android Studio / Flutter pueden generar el resto de la carpeta android/
+si usas "New Flutter Project" y luego reemplazas lib/ y pubspec.yaml.
+
+RECOMENDADO SI FALLA AL ABRIR:
+  flutter create . --project-name automarket_app
+  (dentro de la carpeta, regenera android/ios sin borrar lib/)
+  luego flutter pub get
