@@ -8,11 +8,13 @@ import '../../../core/theme/app_theme.dart';
 import '../../profile/profile_repository.dart';
 import '../../my_vehicles/presentation/my_vehicles_screen.dart';
 
+/// Valores alineados con vehicleInput del backend (market.ts).
 class PublishVehicleScreen extends ConsumerStatefulWidget {
   const PublishVehicleScreen({super.key});
 
   @override
-  ConsumerState<PublishVehicleScreen> createState() => _PublishVehicleScreenState();
+  ConsumerState<PublishVehicleScreen> createState() =>
+      _PublishVehicleScreenState();
 }
 
 class _PublishVehicleScreenState extends ConsumerState<PublishVehicleScreen> {
@@ -28,9 +30,11 @@ class _PublishVehicleScreenState extends ConsumerState<PublishVehicleScreen> {
 
   String _condition = 'usado';
   String _fuel = 'gasolina';
-  String _transmission = 'mecánica';
-  String _bodyType = 'sedán';
+  String _transmission = 'manual';
+  String _bodyType = 'sedan';
   String _listingType = 'venta';
+  bool _taxesCurrent = true;
+  bool _finesCurrent = true;
   bool _loading = false;
   final List<String> _imagesDataUrl = [];
 
@@ -68,6 +72,14 @@ class _PublishVehicleScreenState extends ConsumerState<PublishVehicleScreen> {
       );
       return;
     }
+    if (_description.text.trim().length < 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('La descripción debe tener al menos 10 caracteres'),
+        ),
+      );
+      return;
+    }
     setState(() => _loading = true);
     try {
       await ref.read(profileRepositoryProvider).createVehicle({
@@ -76,7 +88,9 @@ class _PublishVehicleScreenState extends ConsumerState<PublishVehicleScreen> {
         'model': _model.text.trim(),
         'year': int.parse(_year.text.trim()),
         'mileage': int.parse(_mileage.text.trim().replaceAll('.', '')),
-        'price': double.parse(_price.text.trim().replaceAll('.', '').replaceAll(',', '')),
+        'price': double.parse(
+          _price.text.trim().replaceAll('.', '').replaceAll(',', ''),
+        ),
         'condition': _condition,
         'fuel': _fuel,
         'transmission': _transmission,
@@ -85,13 +99,19 @@ class _PublishVehicleScreenState extends ConsumerState<PublishVehicleScreen> {
         'description': _description.text.trim(),
         'images': _imagesDataUrl,
         'listingType': _listingType,
+        'taxesCurrent': _taxesCurrent,
+        'finesCurrent': _finesCurrent,
         'showWhatsapp': true,
         'acceptLowerOffers': true,
       });
       if (!mounted) return;
       ref.invalidate(myVehiclesProvider);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Anuncio publicado')),
+        const SnackBar(
+          content: Text(
+            'Anuncio enviado. Si no estás verificado, queda en revisión.',
+          ),
+        ),
       );
       context.pop();
     } catch (e) {
@@ -113,7 +133,10 @@ class _PublishVehicleScreenState extends ConsumerState<PublishVehicleScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text('Fotos (máx. 6)', style: TextStyle(fontWeight: FontWeight.w700)),
+            const Text(
+              'Fotos (máx. 6)',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -125,14 +148,24 @@ class _PublishVehicleScreenState extends ConsumerState<PublishVehicleScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.memory(bytes, width: 88, height: 88, fit: BoxFit.cover),
+                        child: Image.memory(
+                          bytes,
+                          width: 88,
+                          height: 88,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                       Positioned(
                         right: 0,
                         top: 0,
                         child: IconButton(
-                          icon: const Icon(Icons.close, size: 18, color: Colors.white),
-                          onPressed: () => setState(() => _imagesDataUrl.removeAt(e.key)),
+                          icon: const Icon(
+                            Icons.close,
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                          onPressed: () =>
+                              setState(() => _imagesDataUrl.removeAt(e.key)),
                         ),
                       ),
                     ],
@@ -150,7 +183,7 @@ class _PublishVehicleScreenState extends ConsumerState<PublishVehicleScreen> {
               const Padding(
                 padding: EdgeInsets.only(top: 6),
                 child: Text(
-                  'En web el selector de archivos del navegador se usa automáticamente.',
+                  'En web se usa el selector de archivos del navegador.',
                   style: TextStyle(color: AppColors.muted, fontSize: 12),
                 ),
               ),
@@ -162,23 +195,52 @@ class _PublishVehicleScreenState extends ConsumerState<PublishVehicleScreen> {
             _field(_mileage, 'Kilometraje', keyboard: TextInputType.number),
             _field(_price, 'Precio (COP)', keyboard: TextInputType.number),
             _field(_city, 'Ciudad'),
-            _field(_description, 'Descripción', maxLines: 4),
+            _field(
+              _description,
+              'Descripción (mín. 10 caracteres)',
+              maxLines: 4,
+            ),
             const SizedBox(height: 8),
-            _dropdown('Tipo de anuncio', _listingType, ['venta', 'permuta', 'ambos'], (v) {
-              setState(() => _listingType = v!);
-            }),
-            _dropdown('Condición', _condition, ['nuevo', 'usado'], (v) {
-              setState(() => _condition = v!);
-            }),
-            _dropdown('Combustible', _fuel, ['gasolina', 'diésel', 'híbrido', 'eléctrico', 'gas'], (v) {
-              setState(() => _fuel = v!);
-            }),
-            _dropdown('Transmisión', _transmission, ['mecánica', 'automática'], (v) {
-              setState(() => _transmission = v!);
-            }),
-            _dropdown('Carrocería', _bodyType, ['sedán', 'hatchback', 'SUV', 'pickup', 'van', 'otro'], (v) {
-              setState(() => _bodyType = v!);
-            }),
+            _dropdown(
+              'Tipo de anuncio',
+              _listingType,
+              const ['venta', 'permuta', 'ambos'],
+              (v) => setState(() => _listingType = v!),
+            ),
+            _dropdown(
+              'Condición',
+              _condition,
+              const ['nuevo', 'seminuevo', 'usado'],
+              (v) => setState(() => _condition = v!),
+            ),
+            _dropdown(
+              'Combustible',
+              _fuel,
+              const ['gasolina', 'diesel', 'hibrido', 'electrico'],
+              (v) => setState(() => _fuel = v!),
+            ),
+            _dropdown(
+              'Transmisión',
+              _transmission,
+              const ['manual', 'automatica'],
+              (v) => setState(() => _transmission = v!),
+            ),
+            _dropdown(
+              'Carrocería',
+              _bodyType,
+              const ['sedan', 'suv', 'pickup', 'hatchback', 'van', 'coupe'],
+              (v) => setState(() => _bodyType = v!),
+            ),
+            SwitchListTile(
+              title: const Text('Impuestos al día'),
+              value: _taxesCurrent,
+              onChanged: (v) => setState(() => _taxesCurrent = v),
+            ),
+            SwitchListTile(
+              title: const Text('Comparendos al día'),
+              value: _finesCurrent,
+              onChanged: (v) => setState(() => _finesCurrent = v),
+            ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _loading ? null : _submit,
@@ -186,7 +248,10 @@ class _PublishVehicleScreenState extends ConsumerState<PublishVehicleScreen> {
                   ? const SizedBox(
                       height: 22,
                       width: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.black,
+                      ),
                     )
                   : const Text('Publicar'),
             ),
@@ -209,7 +274,8 @@ class _PublishVehicleScreenState extends ConsumerState<PublishVehicleScreen> {
         controller: c,
         keyboardType: keyboard,
         maxLines: maxLines,
-        validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+        validator: (v) =>
+            (v == null || v.trim().isEmpty) ? 'Requerido' : null,
         decoration: InputDecoration(labelText: label),
       ),
     );

@@ -9,7 +9,11 @@ import 'features/home/presentation/home_screen.dart';
 import 'features/my_vehicles/presentation/my_vehicles_screen.dart';
 import 'features/offers/presentation/offers_screen.dart';
 import 'features/profile/presentation/profile_screen.dart';
+import 'features/profile/presentation/edit_profile_screen.dart';
+import 'features/profile/presentation/verification_screen.dart';
+import 'features/publish/presentation/publish_vehicle_screen.dart';
 import 'features/vehicle/presentation/vehicle_detail_screen.dart';
+import 'shared/models/profile.dart';
 import 'shell_scaffold.dart';
 
 final appRouter = GoRouter(
@@ -50,5 +54,20 @@ final appRouter = GoRouter(
     GoRoute(path: '/favorites', builder: (_, __) => const FavoritesScreen()),
     GoRoute(path: '/offers', builder: (_, __) => const OffersScreen()),
     GoRoute(path: '/contact', builder: (_, __) => const ContactScreen()),
+    GoRoute(
+      path: '/edit-profile',
+      builder: (_, state) {
+        final initial = state.extra is Profile ? state.extra as Profile : null;
+        return EditProfileScreen(initial: initial);
+      },
+    ),
+    GoRoute(
+      path: '/verification',
+      builder: (_, __) => const VerificationScreen(),
+    ),
+    GoRoute(
+      path: '/publish',
+      builder: (_, __) => const PublishVehicleScreen(),
+    ),
   ],
 );
